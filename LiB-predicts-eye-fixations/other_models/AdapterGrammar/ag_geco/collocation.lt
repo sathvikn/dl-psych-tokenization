@@ -1,0 +1,39 @@
+1 1 Sentence --> Colloc
+1 1 Sentence --> Colloc Sentence
+Colloc --> Words
+1 1 Words --> Word
+1 1 Words --> Word Words
+Word --> Chars
+1 1 Chars --> Char
+1 1 Chars --> Char Chars
+1 1 Char --> *
+1 1 Char --> '
+1 1 Char --> 1
+1 1 Char --> 6
+1 1 Char --> 7
+1 1 Char --> a
+1 1 Char --> b
+1 1 Char --> c
+1 1 Char --> d
+1 1 Char --> e
+1 1 Char --> f
+1 1 Char --> g
+1 1 Char --> h
+1 1 Char --> i
+1 1 Char --> j
+1 1 Char --> k
+1 1 Char --> l
+1 1 Char --> m
+1 1 Char --> n
+1 1 Char --> o
+1 1 Char --> p
+1 1 Char --> q
+1 1 Char --> r
+1 1 Char --> s
+1 1 Char --> t
+1 1 Char --> u
+1 1 Char --> v
+1 1 Char --> w
+1 1 Char --> x
+1 1 Char --> y
+1 1 Char --> z

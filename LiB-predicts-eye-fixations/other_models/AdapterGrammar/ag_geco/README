@@ -1,0 +1,174 @@
+brent-pyg/README -- README file for adaptor grammar English word segmentation
+
+Mark Johnson, 4th May 2008
+
+This software implements the adaptor grammar word segmentation system
+described in Johnson and Goldwater (2009) "Improving nonparameteric
+Bayesian inference: experiments on unsupervised word segmentation with
+adaptor grammars", Proceedings of NAACL.
+
+You'll need to download the Pitman-Yor adaptor grammar software
+(py-cfg) separately.  You can get this from my Web site:
+
+	http://cog.brown.edu/~mj/Software.htm
+
+You should ensure that the py-cfg program (or a symbolic link to it)
+is in this directory.
+
+py-cfg has lots of options.  You can see them by running 
+
+	py-cfg -h
+
+The entire system is run from the Makefile.  The Makefile can perform
+multiple runs simultaneously with multiple parameters (as described below).
+If you have a multicore machine, you might want to run several runs at
+once.  You can do this with the -j flag.  For example, to run 8 jobs at
+once, execute:
+
+	make -j 8
+
+The Bernstein-Ratner corpus, as modified by Elman and Brent, is in
+br-phono.txt  See the README.br-phono.txt or the bottom of this 
+file for more information.
+
+The adaptor grammar program py-cfg expects its terminals to be
+separated by white space.  Since the terminals are phonemes in this
+application, py-cfg expects the phonemes to be separated by spaces.
+
+br-syll-input.py maps br-phono.txt to the input format expected by py-cfg.
+
+	$ br-syll-input.py < br-phono.txt
+	y u w a n t t u s i D 6 b U k
+	l U k D * z 6 b 7 w I T h I z h & t
+	& n d 6 d O g i
+	y u w a n t t u l U k & t D I s
+	...
+
+py-cfg reads this input and parses it with respect to a grammar, such as:
+
+	unigram.lt		-- unigram grammar
+	colloc.lt               -- collocation grammar
+	colloc2.lt              -- two-level collocation grammar
+	colloc-syllables.lt	-- collocation and syllables grammar
+
+All of the *.lt files are grammars of one kind or another.
+
+Depending on the grammar you use, py-cfg produces parses that look like:
+
+	(Colloc (Word y u w a n t) (Word t u)) (Colloc (Word s i)) (Colloc (Word D 6) (Word b U k))
+	(Colloc (Word l U k)) (Colloc (Word D * z) (Word 6)) (Colloc (Word b 7) (Word w I T) (Word h I z)) (Colloc (Word h & t))
+	(Colloc (Word & n d)) (Colloc (Word 6) (Word d O g i))
+	(Colloc (Word y u w a n t) (Word t u)) (Colloc (Word l U k & t) (Word D I s))
+	...
+
+eval.py reads and evaluate these trees.  py-cfg can pipe its sample
+parses into eval.py to evaluate segmentation accuracy versus
+iteration.
+
+As the NAACL paper describes, we get slightly higher segmentation
+accuracy if we average over the last 1,000 samples of 8 different runs
+(it helps to have a multi-core machine!).
+
+trees-words.py maps these parse trees to word segmentations, and
+mbr.py finds the most frequent segmentation for each word.
+score_seg.prl (written by Sharon Goldwater) scores these word
+segmentations.
+
+The Makefile attempts to automate all this.  Here's a description of
+the Makefile.
+
+OUTPUTDIR is the name of the directory in which all of the files
+associated with this run will be written.
+
+OUTPUTPREFIX is a prefix prepended to all of these files.  (The idea
+is to make it easy to locate all the files associated with a given run).
+
+GRAMMARS is a list of the grammar files (without the .lt suffix) to try
+on this run.
+
+OUTS is a list of the type of outputs to produce.  The .score files hold
+the accuracy of each run, as computed by score_seg.prl
+
+FOLDS is a sequence of numbers identifying which folds to compute (I don't
+know how to use the Makefile language to produce a list of numbers, so I
+just write out the list).
+
+The rest of the variables (PYAS, PYES, etc) are lists of possible
+parameter values.  The Makefile will create runs that try all combinations
+of these parameters.
+
+OUTPUTS is a list of the output target files that should be computed.
+The way it works is that the output target filename encodes the values
+that the py-cfg parameters will have on the run that produces that
+file.  For example, the file
+
+naacl09/a_Gcolloc_D_E_n2000_m0_t1_w1_a0_b1e4_e0_f0_g10_h0.1_R-1_2.prs
+
+is a file containing parses from fold 2 (identified by the "_2" before .prs).
+py-cfg was called with the grammar "colloc.lt", and with the -D and -E flags
+set, and with -n 2000 -m 0 -t 1 -w 1 -a 0 ... and so on.
+
+The getarg and keyword functions (defined in the Makefile) extract the
+parameters from the filename.
+
+As delivered, simply running "make" should produce .score files for
+some of the grammars discussed in the NAACL paper.  You can override
+some or all of the Makefile variables from the command line.  For example,
+
+	make -j 8 PYNS="100 1000" OUTPUTPREFIX="smalln"
+
+will run 8 jobs simultaneously with 100 and 1000 epochs and save the
+results in files whose names begin with the prefix "smalln".
+
+There are a number of programs for examining the output produced by
+the runs.  For example, write-gnuplot-script.py writes gnuplot command
+to plot various statistics from the runs.  For example,
+
+	write-gnuplot-script.py -y 2 naacl09/*.weval | gnuplot -persist
+
+plots how word f-score varies with every 10 epochs (the Makefile
+specifies TRACEEVERY=10, so the program only evaluates these
+statistics every 10 epochs).
+
+*********************************************************************
+
+README file for br-phono.txt:
+============================
+
+Sharon Goldwater, 3/11/08
+
+README for corpora used in Goldwater et al. word segmentation papers.
+
+Three files are included here, originally obtained from Michael Brent,
+and redistributed with his permission.  See NOTE below for appropriate
+citations.
+
+br-text.txt: the orthographic transcript made by Brent of the
+Bernstein-Ratner corpus in the CHILDES database.  This was made by
+cleaning up non-standard spellings, removing partial words, utterances
+not directed at the children, etc.
+
+dict.txt: the phonological dictionary used to convert orthographic
+forms into phonological forms, resulting in br-phono.txt.
+
+br-phono.txt: the phonological transcript.
+
+****************************************
+
+NOTE: If using these corpora in published materials, please cite
+the following:
+
+CHILDES database:
+B.MacWhinney and C. Snow. 1985. The child language data
+exchange system. Journal of Child Language, 12:271-296.
+
+Bernstein-Ratner corpus (original source of data):
+N. Bernstein-Ratner. 1987. The phonology of parent-child
+speech. In K. Nelson and A. van Kleeck, editors, Children's
+Language, volume 6. Erlbaum, Hillsdale, NJ.
+
+Brent version of B-R corpus:
+Brent, M.R. and T.A. Cartwright. 1996. Distributional regularity and
+phonotactic constraints are useful for segmentation. Cognition 61: 93-125.
+
+

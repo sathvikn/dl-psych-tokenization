@@ -1,0 +1,153 @@
+~/research/py-cfg/README
+
+Mark Johnson, 2nd May 2013
+
+Several people have been running this code on larger data sets, and 
+long running times have become a problem.
+
+The "right thing" would be to rewrite the code to make it run
+efficiently, but until someone gets around to doing that, I've added
+very simple multi-threading support using OpenMP, so there are now
+four different versions of the sampler:
+
+py-cfg  -- single threaded, double precision
+py-cfg-quad  -- single threaded, quad precision
+py-cfg-mp -- multi-threaded, double precision
+py-cfg-quad-mp -- multi-threaded, quad precision
+
+On my 8 core desktop machine, the multi-threaded version runs about
+twice as fast as the single threaded version, albeit using on average
+about 6 cores (i.e., its parallel efficiency is about 33%).
+
+
+====================================================================
+
+Mark Johnson, 30th July 2012
+
+See py-cfg.cc for instructions on running the py-cfg program after
+you've compiled it, or just run "py-cfg -h".
+
+Installation instructions for Linux:
+
+If you have a reasonably modern g++, you should just have to run:
+
+make
+
+However, the standard version of g++ on Mac OSX is quite old,
+so I found I had to install a new g++ and the getopt library
+to get it to work.
+
+I used MacPorts to install the required software on my Macbook Air.
+I'm doing this from memory, but I think this is what I did:
+
+sudo port install gcc47
+sudo port install libgnugetopt
+
+export CC=gcc-mp-4.7
+export CXX=g++-mp-4.7
+export GCCFLAGS=""
+export GCCLDFLAGS="-L/opt/local/lib -l gnugetopt"
+
+make
+
+I'm afraid I'm not an expert on Mac OSX, so this may not be optimal
+(e.g., maybe there are optimisation flags that would speed it up
+considerably).
+
+Hmm, apparently the right way to trace under OSX is to use the
+"Sample Process" tool in the "Activity Monitor".
+
+If you want to profile with Google gperftools, you'll need to compile
+with the following:
+
+sudo port install google-perftools
+sudo port install gv
+
+make py-cfg NDEBUG= GCCLDFLAGS="$GCCLDFLAGS -lprofiler -Wl,-no_pie" GCCFLAGS="$GCCFLAGS -Wl,-no_pie"
+
+env CPUPROFILE=py-cfg.prof py-cfg -d 10 -D -n 100 -R -1 -e 1 -f 1 -g 1e2 -h 1e-2 ~/research/morph/syllable-pyg/colloc3-syllablesIF.lt < br-phono.txt 
+
+Mark
+
+=======================================================================
+
+Mark Johnson, 17th November 2012
+
+On very long strings the probabilities estimated by the parser can
+sometimes underflow, especially during the first couple of iterations
+when the probability estimates are still very poor.
+
+The right way to fix this is to rewrite the program so it rescales
+all of its probabilities during the computation to avoid unflows,
+but until someone gets around to doing this, I've implemented a hack,
+which is just to compile the code using new new quadruple-precision
+floating point maths.
+
+So now when you run make it will produce two binaries:
+
+   py-cfg      -- uses double-precision maths (the default)
+
+   py-cfg-quad -- uses quadruple precision maths
+
+Quadruple precision maths enables it to parse very long strings without
+underflow, but it's much slower than double precision!
+
+=======================================================================
+
+Mark Johnson, 27th August 2009
+
+Pitman-Yor Context-Free Grammars
+================================
+
+Rules are of format
+
+[w [a [b]]] X --> Y1 ... Yn
+
+where X is a nonterminal and Y1 ... Yn are either terminals or
+nonterminals,
+
+w is the Dirichlet hyper-parameter (i.e., pseudo-count) associated
+with this rule (a positive real)
+
+a is the PY "a" constant associated with X (a positive real less
+than 1)
+
+b is the PY "b" constant associated with X (a positive real)
+
+
+The -h flag causes the program to print out a list of options.
+
+The -A parses-file causes it to print out analyses of the training data
+for the last few iterations (the number of iterations is specified by the
+-N flag).
+
+If you specify the -C flag, these trees are printed in "compact" format,
+i.e., only cached categories are printed (I think the root node is always
+printed, just so we have a tree).
+
+If you don't specify the -C flag, cached nodes are suffixed by a 
+'#' followed by a number, which is the number of customers at this
+table.
+
+
+Brief recap of Pitman-Yor processes
+===================================
+
+Suppose there are n samples occupying m tables.  Then the probability
+that the n+1 sample occupies table 1 <= k <= m is:
+
+  P(x_{n+1} = k) = (n_k - a)/(n + b)
+
+and the probability that the n+1 sample occupies the new table m+1 is:
+
+  P(x_{n+1} = m+1) = (m*a + b)/(n + b)
+
+The probability of a configuration in which a restaurant contains n
+customers at m tables, with n_k customers at table k is:
+
+
+  a^{-m} G(m+b/a)  G(b)                 G(n_k-a)
+         -------- ------  \prod_{k=1}^m --------
+          G(b/a)  G(n+b)                 G(1-a)
+
+where G is the Gamma function.
