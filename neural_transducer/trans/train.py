@@ -126,8 +126,8 @@ def precompute_from_expert(s: utils.Sample, transducer_: transducer.Transducer, 
 def main(args: argparse.Namespace):
     for key, value in vars(args).items():
         logging.info("%s: %s", str(key).ljust(15), value)
-
-    os.makedirs(args.output)
+    if not os.path.isdir(args.output):
+        os.makedirs(args.output)
 
     if args.pytorch_seed is not None:
         torch.manual_seed(args.pytorch_seed)
