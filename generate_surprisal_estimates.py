@@ -1,37 +1,62 @@
 import argparse
 import os
-
+from typing import Dict, List
+import kenlm
 import pandas as pd
+from transformers import AutoTokenizer
 
 
-def process_dundee_corpus(path: str):
-    averaged_times = [f for f in os.listdir("path") if f.endswith("_avg.txt")] # file name
+def process_dundee_corpus(path: str, models: List[Dict]):
+    averaged_times = [f for f in os.listdir(path) if f.endswith("_avg.txt")] # file name
     surprisal_rt = []
     for textfile in averaged_times:
         current_sentence = []
-        for line in textfile.readlines():
-            current_sentence.append(line)
+        total_rt = 0
+        file_lines = open(os.path.join(path, textfile), 'r').readlines()
+        for line in file_lines:
+            current_word, word_rt = line.split()
+            current_sentence.append(current_word)
+            total_rt += float(word_rt)
             if "." in line: # other conditions for end sentence, also condition to exclude things
-                surprisal_rt.append(compute_sentence_surprisal(" ".join(current_sentence)))
+                # TODO: how do we stop this thing from spitting out UNIGRAM surprisal??
+                surprisal_rt.append(compute_sentence_surprisal(" ".join(current_sentence), total_rt, models))
                 current_sentence = []
-
-                
+                total_rt = 0 
+        break
     return pd.DataFrame(surprisal_rt)
-
     
-def load_models():
+def load_models(model_dir: str):
+    # returns a kv pair of strings to kenLM Model objects for each model in the directory.
+    models = []
+    for model in os.listdir(model_dir):
+        model_dict = {}
+        model_dict['name'] = model.split(".arpa")[0]
+        model_dict['lm'] = kenlm.Model(os.path.join(model_dir, model))
+        if "bpe" in model_dict['name']:
+            model_dict['tokenizer'] = AutoTokenizer.from_pretrained("gpt2") 
+        models.append(model_dict)
+    return models
 
-
-def compute_sentence_surprisal(sentence: str, models: list):
+def compute_sentence_surprisal(sentence: List[str], total_rt: float, models: List[Dict]):
     # for each model
     # tokenize sentence & compute surprisal
-
-    return {sentence: , avg_rt:, model: , model: }
+    sentence_rt_surprisals = {'sentence': sentence, 'total_rt': total_rt, 'word_count': len(sentence)}
+    for model_dict in models:
+        processed_sentence = " ".join(sentence)
+        model_name = model_dict['name']
+        if 'tokenizer' in model_dict.keys(): # HACK, just works w/GPT2 tokenization now
+            processed_sentence = "Ġ" + " ".join(model_dict['tokenizer'].tokenize(processed_sentence))
+        sentence_rt_surprisals[f'{model_name}_surprisal'] = model_dict['lm'].score(processed_sentence, bos = True, eos = True)
+    return sentence_rt_surprisals
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--corpus", type = str, required = True)
-    parser.add_argument("--output", type = str, required = True)
+    parser.add_argument("--corpus", type = str, required = True, help = "directory w/input data")
+    parser.add_argument("--models", type = str, required = True, help = "directory w/ngram models")
+    parser.add_argument("--output", type = str, required = True, help = "output filepath")
     args = parser.parse_args()
-
-
+    corpus_surprisals = pd.DataFrame()
+    models = load_models(args.models)
+    if "dundee" in args.corpus:
+        corpus_surprisals = process_dundee_corpus(args.corpus, models)
+    corpus_surprisals.to_csv(args.output)
