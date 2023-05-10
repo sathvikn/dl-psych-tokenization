@@ -1,65 +1,67 @@
 import argparse
 import os
+import re
 from typing import Dict, List
 
 import kenlm
 import pandas as pd
 import numpy as np
 
+from nltk.tokenize import sent_tokenize
 from transformers import AutoTokenizer
 from tqdm import tqdm
 
-def process_dundee_corpus(path: str, models: List[Dict]):
-    averaged_times = [f for f in os.listdir(path) if f.endswith("_avg.txt")] # file name
-    surprisal_rt = []
-    for textfile in tqdm(averaged_times):
-        current_sentence = []
-        total_rt = 0
-        file_lines = open(os.path.join(path, textfile), 'r').readlines()
-        for line in file_lines:
-            current_word, word_rt = line.split()
-            current_sentence.append(current_word)
-            total_rt += float(word_rt)
-            if "." in current_word or "?" in current_word or "!" in current_word: # other conditions for end sentence, also condition to exclude things
-                # TODO: up to index -1 is to exclude punctuation
-                surprisal_rt.append(compute_sentence_surprisal(" ".join(current_sentence)[:-1], total_rt, models))
-                current_sentence = []
-                total_rt = 0 
-    return pd.DataFrame(surprisal_rt)
-    
-def load_models(model_dir: str):
-    # returns a kv pair of strings to kenLM Model objects for each model in the directory.
-    models = []
-    for model in os.listdir(model_dir):
-        model_dict = {}
-        model_dict['name'] = model.split(".arpa")[0]
-        model_dict['lm'] = kenlm.Model(os.path.join(model_dir, model))
-        if "bpe" in model_dict['name']:
-            model_dict['tokenizer'] = AutoTokenizer.from_pretrained("gpt2") 
-        models.append(model_dict)
-    return models
+def compute_surprisals(rt_data:pd.DataFrame, model: Dict):
+    # rt_data has 4 columns, token_uid, token, rt, and transcript_id
+    transcript_ids = rt_data['transcript_id'].unique()
+    surprisals = []
+    for tid in transcript_ids: # keeping track of the unique transcript
+        transcript_data = rt_data[rt_data['transcript_id'] == tid]
+        sentences = sent_tokenize(" ".join(transcript_data['token']))
+        transcript_surprisals = []
+        for i in np.arange(len(sentences)):
+            sent, tokens = process_sentence(sentences[i])
+            if len(tokens):
+                if 'tokenizer' in model.keys(): # HACK, just works w/GPT2 tokenization now
+                    tokens = model['tokenizer'].tokenize(sent)
+                    sent = "Ġ" + " ".join(tokens)
+                token_scores = [score for score in model['lm'].full_scores(sent, eos = False)]
+                assert len(token_scores) == len(tokens)
+                transcript_surprisals += [{"token": token, "transcript_id": tid, "sentence_id": i,
+                "token_score": convert_probability(result[0]), "oov": result[2]}
+                for token, result in zip(tokens, token_scores)]
+            else:
+                print(sentences[i], tid)
+        surprisals += transcript_surprisals
+    return pd.DataFrame(surprisals)
 
-def compute_sentence_surprisal(sentence: List[str], total_rt: float, models: List[Dict]):
-    # for each model
-    # tokenize sentence & compute surprisal
-    sentence_rt_surprisals = {'sentence': sentence, 'total_rt': total_rt, 'word_count': len(sentence.split(" "))}
-    for model_dict in models:
-        processed_sentence = " ".join(sentence)
-        model_name = model_dict['name']
-        if 'tokenizer' in model_dict.keys(): # HACK, just works w/GPT2 tokenization now
-            processed_sentence = "Ġ" + " ".join(model_dict['tokenizer'].tokenize(processed_sentence))
-        # score is log prob (log 10)
-        sentence_rt_surprisals[f'{model_name}_surprisal'] = model_dict['lm'].score(processed_sentence, bos = True, eos = True)
-    return sentence_rt_surprisals
+def convert_probability(score: float):
+    # the kenLM scores are in log base 10
+    return -np.log2(10**score)
+
+def process_sentence(sentence: str):
+    sent = re.sub(r'[^\w\s]', '', sentence).lower().strip() # get rid of punctuation
+    tokens = sent.split(" ")
+    tokens = np.delete(tokens, [i for i in range(len(tokens)) if not tokens[i]])
+    sent = " ".join(tokens)
+    return sent, tokens
+
+def load_model(model_path: str):
+    model_dict = {}
+    model_dict['name'] = model_path.split(".arpa")[0].split("/")[-1]
+    model_dict['lm'] = kenlm.Model(model_path)
+    if "bpe" in model_dict['name']:
+        model_dict['tokenizer'] = AutoTokenizer.from_pretrained("gpt2") 
+    return model_dict
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--corpus", type = str, required = True, help = "directory w/input data")
-    parser.add_argument("--models", type = str, required = True, help = "directory w/ngram models")
+    parser.add_argument("--data", type = str, required = True, help = "path to CSV of RTs")
+    parser.add_argument("--model", type = str, required = True, help = "path to .arpa file for 5gram LM")
     parser.add_argument("--output", type = str, required = True, help = "output filepath")
     args = parser.parse_args()
     corpus_surprisals = pd.DataFrame()
-    models = load_models(args.models)
-    if "dundee" in args.corpus:
-        corpus_surprisals = process_dundee_corpus(args.corpus, models)
+    model = load_model(args.model)
+    rt_df = pd.read_csv(args.data)
+    corpus_surprisals = compute_surprisals(rt_df, model)
     corpus_surprisals.to_csv(args.output)
