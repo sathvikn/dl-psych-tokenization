@@ -15,5 +15,6 @@ for filename in averaged_times:
 
 rt_df = pd.DataFrame(rt_data)
 rt_df.index.name = "token_uid"
+rt_df["token"] = rt_df["token"].str.replace('[^\w\s]','')
+rt_df = rt_df[rt_df['token'] != ''] # getting rid of punctuation (FOR NOW)
 rt_df.to_csv("../dundee_rts.csv")
-
