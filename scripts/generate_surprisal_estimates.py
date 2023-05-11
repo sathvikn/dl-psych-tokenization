@@ -24,7 +24,9 @@ def compute_surprisals(rt_data:pd.DataFrame, model: Dict):
             if len(tokens):
                 if 'tokenizer' in model.keys(): # HACK, just works w/GPT2 tokenization now
                     tokens = model['tokenizer'].tokenize(sent)
+                    # adding word boundary characters so sentence-initial tokens don't get treated differently
                     sent = "Ġ" + " ".join(tokens)
+                    tokens[0] = "Ġ" + tokens[0]
                 token_scores = [score for score in model['lm'].full_scores(sent, eos = False)]
                 assert len(token_scores) == len(tokens)
                 transcript_surprisals += [{"token": token, "transcript_id": tid, "sentence_id": i,
