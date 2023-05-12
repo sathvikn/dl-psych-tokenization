@@ -24,6 +24,10 @@ def combine_data(rt_data: pd.DataFrame, surprisals: pd.DataFrame, word_boundary 
                 mismatch = False
         buffer['rt'] = current_word[rt_columns.index('RT')]
         buffer['token_uid'] = current_word[rt_columns.index('token_uid')]
+        buffer['exclude_rt'] = current_word[rt_columns.index('exclude')]
         rt_surprisals.append(buffer)
         buffer = {}
     return pd.DataFrame(rt_surprisals)
+
+def word_length(rt_data: pd.DataFrame, token_col: str):
+    return rt_data.apply(len, 'token_col', axis = 1)
