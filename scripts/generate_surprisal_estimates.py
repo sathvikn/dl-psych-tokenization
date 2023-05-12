@@ -30,7 +30,8 @@ def compute_surprisals(rt_data:pd.DataFrame, model: Dict):
                 token_scores = [score for score in model['lm'].full_scores(sent, eos = False)]
                 assert len(token_scores) == len(tokens)
                 transcript_surprisals += [{"token": token, "transcript_id": tid, "sentence_id": i,
-                "token_score": convert_probability(result[0]), "oov": result[2]}
+                "surprisal": convert_probability(result[0]), "oov": result[2]}
+                # TODO convert token_score to suprisal
                 for token, result in zip(tokens, token_scores)]
             else:
                 print(sentences[i], tid)

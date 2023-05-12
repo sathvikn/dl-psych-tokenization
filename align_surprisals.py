@@ -24,7 +24,6 @@ def combine_data(rt_data: pd.DataFrame, surprisals: pd.DataFrame, word_boundary 
                 mismatch = False
         buffer['rt'] = current_word[rt_columns.index('RT')]
         buffer['token_uid'] = current_word[rt_columns.index('token_uid')]
-        buffer = {"surprisal" if k == 'token_score' else k:v for k,v in buffer.items()}
         rt_surprisals.append(buffer)
         buffer = {}
     return pd.DataFrame(rt_surprisals)
