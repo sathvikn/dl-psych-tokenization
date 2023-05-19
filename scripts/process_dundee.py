@@ -27,12 +27,12 @@ exclude_token_preceding_punct = exclusion_index(rt_df, 'preceding_punct', 1)
 exclude_token_following_punct = exclusion_index(rt_df, 'following_punct', -1)
 exclude_token_after_non_alpha = exclusion_index(rt_df, 'is_punct_non_alpha', 1)
 exclude = exclude_token_preceding_punct.union(exclude_token_following_punct).union(exclude_token_after_non_alpha)
-rt_df["token"] = rt_df["token"].str.replace('[^\w\s]','') # getting rid of punctuation
-exclude = exclude.union(rt_df[rt_df['token'] == ''].index.union(rt_df[rt_df['token'] == ''].index - 1)) # token after would have been covered by non_alpha case
+without_punct = rt_df["token"].str.replace('[^\w\s]','') # getting rid of punctuation
+exclude = exclude.union(without_punct[without_punct == ''].index.union(without_punct[without_punct == ''].index - 1)) # token after would have been covered by non_alpha case
 exclusion_column = pd.Series(0, range(len(rt_df.index)))
 for i in range(len(exclusion_column)):
     if i in exclude.values:
         exclusion_column.at[i] = 1
 rt_df['exclude'] = exclusion_column
 rt_df = rt_df[rt_df['token'] != '']
-rt_df.to_csv("dundee_rts.csv")
+rt_df.to_csv("dundee_rts_v1.csv")

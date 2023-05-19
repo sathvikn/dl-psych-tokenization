@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 def combine_data(rt_data: pd.DataFrame, surprisals: pd.DataFrame, word_boundary = ''):
     rt_surprisals = []
@@ -17,7 +18,7 @@ def combine_data(rt_data: pd.DataFrame, surprisals: pd.DataFrame, word_boundary 
             current_token = next(surprisal_iterator)[1:]
             token_index += 1
             buffer['token'] += current_token[surprisal_columns.index('token')]
-            buffer['token_score'] += current_token[surprisal_columns.index('token_score')]
+            buffer['surprisal'] += current_token[surprisal_columns.index('surprisal')]
             if not buffer['oov'] and current_token[surprisal_columns.index('oov')]:
                 buffer['oov'] = True
             if buffer['token'] == current_word[rt_columns.index('token')].lower():
@@ -41,7 +42,7 @@ def join_log_freq(filepath: str, rt_data: pd.DataFrame):
 def prev_token_predictors(rt_data: pd.DataFrame):
     rt_data['prev_freq'] = rt_data['log_freq'].shift(1)
     rt_data['prev_len'] = rt_data['word_length'].shift(1)
-    rt_data['prev_surprisal'] = rt_data['token_score'].shift(1)
+    rt_data['prev_surprisal'] = rt_data['surprisal'].shift(1)
     return rt_data
 
 def generate_predictors(rt_data: pd.DataFrame):
