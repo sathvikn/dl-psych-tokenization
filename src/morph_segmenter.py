@@ -15,10 +15,10 @@ from trans.train import decode
 
 def tokenize_sentence(model: transducer, vocab: vocabulary, sentence: str, wb_char: str):
     # the results contain the original token and the tab-separated output from the transducer 
-    dataloader = prep_data(sentence, vocab, batch_size = 5)
+    dataloader = prep_data([sentence], vocab, batch_size = 5)
     results = predict(model, dataloader)
-    tokenized = " ".join([insert_wb_char(token.split("\t", wb_char)[1]) for token in results])
-    return tokenized, results
+    tokens = [insert_wb_char(token.split("\t")[1], wb_char) for token in results]
+    return tokens, results
     
 def tokenize_corpus(model_dir: str, sentence_list: List[str], wb_char: str):
     sentence_list = sentence_list
@@ -52,8 +52,8 @@ def load_model_and_vocab(model_dir:str):
 def prep_data(sentence_list: List[str], vocab: vocabulary.Vocabularies, batch_size: int):
     # the transducer accepts word-by-word (or token-by-token)
     test_data = utils.Dataset()
-    print("reading sentences into Dataloader")
-    for sentence in tqdm(sentence_list):
+    #print("reading sentences into Dataloader")
+    for sentence in sentence_list:
         sentence_tokens = sentence.strip().split()
         for token in sentence_tokens:
             encoded_input = torch.tensor(vocab.encode_unseen_input(token))
@@ -63,7 +63,7 @@ def prep_data(sentence_list: List[str], vocab: vocabulary.Vocabularies, batch_si
 
 def predict(model: transducer, data_loader: torch.utils.data.DataLoader):
     results = []
-    print("making predictions")
+    #print("making predictions")
     with torch.no_grad():
         predictions = decode(model, data_loader).predictions
         results += predictions

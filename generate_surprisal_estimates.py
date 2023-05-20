@@ -1,7 +1,7 @@
 import argparse
 import json
 import re
-import sys
+from tqdm import tqdm
 from typing import Dict
 
 import kenlm
@@ -11,7 +11,6 @@ import numpy as np
 from nltk.tokenize import sent_tokenize
 from transformers import AutoTokenizer
 
-sys.path.append("..")
 from src.morph_segmenter import load_model_and_vocab, tokenize_sentence
 
 def compute_surprisals(rt_data:pd.DataFrame, model: Dict):
@@ -19,7 +18,8 @@ def compute_surprisals(rt_data:pd.DataFrame, model: Dict):
     transcript_ids = rt_data['transcript_id'].unique()
     surprisals = []
     lookup_tbl = [] # mapping words to their morphological tokenizations
-    for tid in transcript_ids: # keeping track of the unique transcript
+    print("transcript progress:")
+    for tid in tqdm(transcript_ids): # keeping track of the unique transcript
         transcript_data = rt_data[rt_data['transcript_id'] == tid]
         sentences = sent_tokenize(" ".join(transcript_data['token']))
         transcript_surprisals = []
@@ -32,7 +32,9 @@ def compute_surprisals(rt_data:pd.DataFrame, model: Dict):
                     sent = model['word_boundary'] + " ".join(tokens)
                     tokens[0] = model['word_boundary'] + tokens[0]
                 elif 'morph' in model['name']:
-                    sent, token_mapping = tokenize_sentence(model['transducer'], model['vocab'], sent)
+                    tokens, token_mapping = tokenize_sentence(model['transducer'], model['vocab'], sent, model['word_boundary'])
+                    sent = " ".join(tokens)
+                    tokens = sent.split(" ")
                     lookup_tbl += token_mapping
                 token_scores = [score for score in model['lm'].full_scores(sent, eos = False)]
                 assert len(token_scores) == len(tokens)
@@ -43,11 +45,8 @@ def compute_surprisals(rt_data:pd.DataFrame, model: Dict):
                 print(sentences[i], tid)
         surprisals += transcript_surprisals
     if len(lookup_tbl):
-        try:
-            with open("morph_lookup.tsv") as file:
-                file.writelines(line + "\n" for line in lookup_tbl)
-        except:
-            print("error with making lookup table")
+        with open("morph_lookup.tsv", "w") as file:
+            file.writelines(line + "\n" for line in lookup_tbl)
     return pd.DataFrame(surprisals)
 
 def convert_probability(score: float):
@@ -81,7 +80,7 @@ if __name__ == "__main__":
     parser.add_argument("--output", type = str, required = True, help = "output filepath")
     args = parser.parse_args()
     corpus_surprisals = pd.DataFrame()
-    model_config = json.load(open("../model_config.json"))
+    model_config = json.load(open("model_config.json"))
     model = load_model(args.model, model_config)
     rt_df = pd.read_csv(args.data)
     corpus_surprisals = compute_surprisals(rt_df, model)
