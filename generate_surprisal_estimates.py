@@ -43,8 +43,11 @@ def compute_surprisals(rt_data:pd.DataFrame, model: Dict):
                 print(sentences[i], tid)
         surprisals += transcript_surprisals
     if len(lookup_tbl):
-        with open("morph_lookup.tsv") as file:
-            file.writelines(line + "\n" for line in lookup_tbl)
+        try:
+            with open("morph_lookup.tsv") as file:
+                file.writelines(line + "\n" for line in lookup_tbl)
+        except:
+            print("error with making lookup table")
     return pd.DataFrame(surprisals)
 
 def convert_probability(score: float):

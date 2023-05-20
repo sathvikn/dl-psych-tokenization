@@ -6,7 +6,6 @@ from typing import List
 
 from transformers import AutoTokenizer
 
-sys.path.append("..")
 from src import morph_segmenter
 
 def load_pickle(filename):
