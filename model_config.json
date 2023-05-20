@@ -1,0 +1,4 @@
+{
+	"bpe": {"word_boundary":"Ġ"},
+	"transducer": {"word_boundary":"↓", "path": "sigmorphon_model/model"}
+}

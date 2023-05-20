@@ -1,7 +1,8 @@
 import argparse
-import os
+import json
 import re
-from typing import Dict, List
+import sys
+from typing import Dict
 
 import kenlm
 import pandas as pd
@@ -9,12 +10,15 @@ import numpy as np
 
 from nltk.tokenize import sent_tokenize
 from transformers import AutoTokenizer
-from tqdm import tqdm
+
+sys.path.append("..")
+from src.morph_segmenter import load_model_and_vocab, tokenize_sentence
 
 def compute_surprisals(rt_data:pd.DataFrame, model: Dict):
     # rt_data has 4 columns, token_uid, token, rt, and transcript_id
     transcript_ids = rt_data['transcript_id'].unique()
     surprisals = []
+    lookup_tbl = [] # mapping words to their morphological tokenizations
     for tid in transcript_ids: # keeping track of the unique transcript
         transcript_data = rt_data[rt_data['transcript_id'] == tid]
         sentences = sent_tokenize(" ".join(transcript_data['token']))
@@ -22,11 +26,14 @@ def compute_surprisals(rt_data:pd.DataFrame, model: Dict):
         for i in np.arange(len(sentences)):
             sent, tokens = process_sentence(sentences[i])
             if len(tokens):
-                if 'tokenizer' in model.keys(): # HACK, just works w/GPT2 tokenization now
+                if 'bpe' in model['name']:
                     tokens = model['tokenizer'].tokenize(sent)
                     # adding word boundary characters so sentence-initial tokens don't get treated differently
-                    sent = "Ġ" + " ".join(tokens)
-                    tokens[0] = "Ġ" + tokens[0]
+                    sent = model['word_boundary'] + " ".join(tokens)
+                    tokens[0] = model['word_boundary'] + tokens[0]
+                elif 'morph' in model['name']:
+                    sent, token_mapping = tokenize_sentence(model['transducer'], model['vocab'], sent)
+                    lookup_tbl += token_mapping
                 token_scores = [score for score in model['lm'].full_scores(sent, eos = False)]
                 assert len(token_scores) == len(tokens)
                 transcript_surprisals += [{"token": token, "transcript_id": tid, "sentence_id": i,
@@ -35,6 +42,9 @@ def compute_surprisals(rt_data:pd.DataFrame, model: Dict):
             else:
                 print(sentences[i], tid)
         surprisals += transcript_surprisals
+    if len(lookup_tbl):
+        with open("morph_lookup.tsv") as file:
+            file.writelines(line + "\n" for line in lookup_tbl)
     return pd.DataFrame(surprisals)
 
 def convert_probability(score: float):
@@ -48,12 +58,17 @@ def process_sentence(sentence: str):
     sent = " ".join(tokens)
     return sent, tokens
 
-def load_model(model_path: str):
+def load_model(model_path: str, model_config: Dict):
+    # Create a dictionary with the loaded ngram model and metadata from the config json
     model_dict = {}
     model_dict['name'] = model_path.split(".arpa")[0].split("/")[-1]
     model_dict['lm'] = kenlm.Model(model_path)
     if "bpe" in model_dict['name']:
-        model_dict['tokenizer'] = AutoTokenizer.from_pretrained("gpt2") 
+        model_dict['tokenizer'] = AutoTokenizer.from_pretrained("gpt2")
+        model_dict['word_boundary'] = model_config['bpe']['word_boundary']
+    elif "morph" in model_dict['name']:
+        model_dict['transducer'], model_dict['vocab'] = load_model_and_vocab(model_config['transducer']['path'])
+        model_dict['word_boundary'] = model_config['transducer']['word_boundary']
     return model_dict
 
 if __name__ == "__main__":
@@ -63,7 +78,8 @@ if __name__ == "__main__":
     parser.add_argument("--output", type = str, required = True, help = "output filepath")
     args = parser.parse_args()
     corpus_surprisals = pd.DataFrame()
-    model = load_model(args.model)
+    model_config = json.load(open("../model_config.json"))
+    model = load_model(args.model, model_config)
     rt_df = pd.read_csv(args.data)
     corpus_surprisals = compute_surprisals(rt_df, model)
     corpus_surprisals.to_csv(args.output)
