@@ -45,7 +45,7 @@ def compute_surprisals(rt_data:pd.DataFrame, model: Dict):
                 print(sentences[i], tid)
         surprisals += transcript_surprisals
     if len(lookup_tbl):
-        with open("morph_lookup.tsv", "w") as file:
+        with open(model['lookup_path'], "w") as file:
             file.writelines(line + "\n" for line in lookup_tbl)
     return pd.DataFrame(surprisals)
 
@@ -70,7 +70,7 @@ def load_model(model_path: str, model_config: Dict):
         model_dict['word_boundary'] = model_config['bpe']['word_boundary']
     elif "morph" in model_dict['name']:
         model_dict['transducer'], model_dict['vocab'] = load_model_and_vocab(model_config['transducer']['path'])
-        model_dict['word_boundary'] = model_config['transducer']['word_boundary']
+        model_dict['word_boundary'], model_dict['lookup_path'] = model_config['transducer']['word_boundary'], model_config['transducer']['lookup_tbl']
     return model_dict
 
 if __name__ == "__main__":

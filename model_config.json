@@ -1,4 +1,4 @@
 {
 	"bpe": {"word_boundary":"Ġ"},
-	"transducer": {"word_boundary":"↓", "path": "sigmorphon_model/model"}
+	"transducer": {"word_boundary":"↓", "path": "sigmorphon_model/model", "lookup_tbl": "morph_lookup.tsv"}
 }
