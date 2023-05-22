@@ -5,7 +5,7 @@ def align_surprisal(rt_data: pd.DataFrame, surprisals: pd.DataFrame, word_bounda
     lookup_table = pd.DataFrame()
     lookup_iterator = iter([])
     if use_lookup:
-        lookup_table = read_lookup_table()
+        lookup_table = read_lookup_table(word_boundary)
         lookup_iterator = lookup_table.itertuples(name = None)
         assert len(lookup_table.index) == len(rt_data.index)
     rt_iterator, rt_columns = rt_data.itertuples(name = None), rt_data.columns.values.tolist()
@@ -39,7 +39,7 @@ def align_surprisal(rt_data: pd.DataFrame, surprisals: pd.DataFrame, word_bounda
         buffer['exclude_rt'] = current_word[rt_columns.index('exclude')]
         if use_lookup:
             # assign it to the word, since its value in the buffer is the morphological tokenization
-            buffer['token'] = current_word[rt_columns.index('token')]
+            buffer['token'] = current_word[rt_columns.index('token')].lower()
         rt_surprisals.append(buffer)
         buffer = {}
     return pd.DataFrame(rt_surprisals)

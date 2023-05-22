@@ -84,6 +84,7 @@ def output_as_sentences(decoder_output: List[str], corpus_sentences: List[str], 
 
 def insert_wb_char(word: str, wb_character: str):
     # Since we are training LMs on tokens, we should add word boundary characters (like GPT2)
+    # this means kenLM is predicting individual tokens, separated by spaces
     if wb_character in word:
         word = word.split(wb_character)
         word = " ".join(word)
