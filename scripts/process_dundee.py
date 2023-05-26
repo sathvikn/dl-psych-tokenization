@@ -23,8 +23,8 @@ rt_df = pd.DataFrame(rt_data)
 rt_df.index.name = "token_uid"
 # TODO document the function
 exclusion_index = lambda df, bool_column, value: df[df[bool_column]].index.union(df[df[bool_column]].index + value)
-exclude_token_preceding_punct = exclusion_index(rt_df, 'preceding_punct', 1)
-exclude_token_following_punct = exclusion_index(rt_df, 'following_punct', -1)
+exclude_token_preceding_punct = exclusion_index(rt_df, 'preceding_punct', 1) # if the token at the end is punctuation, exclude the next token
+exclude_token_following_punct = exclusion_index(rt_df, 'following_punct', -1) # if the token at the beginning is punctuation, exclude the previous token
 exclude_token_after_non_alpha = exclusion_index(rt_df, 'is_punct_non_alpha', 1)
 exclude = exclude_token_preceding_punct.union(exclude_token_following_punct).union(exclude_token_after_non_alpha)
 without_punct = rt_df["token"].str.replace('[^\w\s]','') # getting rid of punctuation
