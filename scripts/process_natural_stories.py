@@ -24,5 +24,5 @@ def exclude_token(df, index):
         if next_token[0] in string.punctuation or not next_token.isalpha():
             return 1
     return 0
-rt_data['exclude_rt'] = [exclude_token(rt_data, i) for i in range(len(rt_data.index))]
+rt_data['exclude'] = [exclude_token(rt_data, i) for i in range(len(rt_data.index))]
 rt_data.to_csv("natural_stories_rts.csv", index = False)

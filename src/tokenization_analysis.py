@@ -54,9 +54,16 @@ def join_log_freq(filepath: str, rt_data: pd.DataFrame):
     return rt_data
 
 def prev_token_predictors(rt_data: pd.DataFrame):
+    #TODO: make this work for two items
     rt_data['prev_freq'] = rt_data['log_freq'].shift(1)
     rt_data['prev_len'] = rt_data['word_length'].shift(1)
     rt_data['prev_surprisal'] = rt_data['surprisal'].shift(1)
+    rt_data['prev_freq_2'] = rt_data['log_freq'].shift(2)
+    rt_data['prev_len_2'] = rt_data['log_freq'].shift(2)
+    rt_data['prev_surprisal_2'] = rt_data['log_freq'].shift(2)
+    rt_data['prev_freq_3'] = rt_data['log_freq'].shift(3)
+    rt_data['prev_len_3'] = rt_data['log_freq'].shift(3)
+    rt_data['prev_surprisal_3'] = rt_data['log_freq'].shift(3)
     return rt_data
 
 def generate_predictors(rt_data: pd.DataFrame):
