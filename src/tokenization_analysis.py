@@ -1,11 +1,16 @@
+import numpy as np
 import pandas as pd
 
-def align_surprisal(rt_data: pd.DataFrame, surprisals: pd.DataFrame, word_boundary: str = "", use_lookup: bool = False):
+from typing import Dict, List
+
+
+def align_surprisal(rt_data: pd.DataFrame, surprisals: pd.DataFrame, model_config: Dict, corpus_name: str, use_lookup: bool = False):
     rt_surprisals = []
     lookup_table = pd.DataFrame()
     lookup_iterator = iter([])
+    word_boundary = model_config['word_boundary']
     if use_lookup:
-        lookup_table = read_lookup_table(word_boundary)
+        lookup_table = read_lookup_table(word_boundary, model_config['lookup_tbl'][corpus_name])
         lookup_iterator = lookup_table.itertuples(name = None)
         assert len(lookup_table.index) == len(rt_data.index)
     rt_iterator, rt_columns = rt_data.itertuples(name = None), rt_data.columns.values.tolist()
@@ -53,27 +58,47 @@ def join_log_freq(filepath: str, rt_data: pd.DataFrame):
     rt_data.rename(columns={'prob': 'log_freq'}, inplace = True)
     return rt_data
 
-def prev_token_predictors(rt_data: pd.DataFrame):
-    #TODO: make this work for two items
-    rt_data['prev_freq'] = rt_data['log_freq'].shift(1)
-    rt_data['prev_len'] = rt_data['word_length'].shift(1)
-    rt_data['prev_surprisal'] = rt_data['surprisal'].shift(1)
-    rt_data['prev_freq_2'] = rt_data['log_freq'].shift(2)
-    rt_data['prev_len_2'] = rt_data['log_freq'].shift(2)
-    rt_data['prev_surprisal_2'] = rt_data['log_freq'].shift(2)
-    rt_data['prev_freq_3'] = rt_data['log_freq'].shift(3)
-    rt_data['prev_len_3'] = rt_data['log_freq'].shift(3)
-    rt_data['prev_surprisal_3'] = rt_data['log_freq'].shift(3)
+def prev_token_predictors(rt_data: pd.DataFrame, num_tokens: int):
+    for i in range(1, num_tokens + 1):
+        rt_data[f'prev_freq_{str(i)}'] = rt_data['log_freq'].shift(i)
+        rt_data[f'prev_len_{str(i)}'] = rt_data['word_length'].shift(i)
+        rt_data[f'prev_surprisal_{str(i)}'] = rt_data['surprisal'].shift(i)
     return rt_data
 
-def generate_predictors(rt_data: pd.DataFrame):
+def generate_predictors(rt_data: pd.DataFrame, prev_tokens: int):
     rt_data['word_length'] = word_length(rt_data, 'token')
     rt_data = join_log_freq('word_freqs.txt', rt_data)
-    rt_data = prev_token_predictors(rt_data)
+    rt_data = prev_token_predictors(rt_data, prev_tokens)
     return rt_data.dropna()
 
-def read_lookup_table(word_boundary):
-    tokenizer_lookup = pd.read_table("morph_lookup.tsv", delimiter = "\t", names = ["token", "morph_tokenization"])
+def read_lookup_table(word_boundary: str, table_path: str):
+    tokenizer_lookup = pd.read_table(table_path, delimiter = "\t", names = ["token", "morph_tokenization"])
     separate_tokens_by_space = lambda word: " ".join(word.split(word_boundary))
     tokenizer_lookup['morph_tokenization'] = tokenizer_lookup['morph_tokenization'].apply(separate_tokens_by_space)
     return tokenizer_lookup
+
+def process_surprisal_data(rts: pd.DataFrame, surprisal_path: str, config: Dict, corpus_name: str, prev_tokens = 1, use_lookup = False):
+    surprisal = pd.read_csv(surprisal_path)
+    combined_data = align_surprisal(rts, surprisal, config, corpus_name, use_lookup)
+    combined_data = generate_predictors(combined_data, prev_tokens)
+    combined_data = combined_data[(~combined_data['oov']) & (~combined_data['exclude_rt'])]
+    return combined_data
+
+def preprocess_rt_data(path: str):
+    rts = pd.read_csv(path)
+    rts["token"] = rts["token"].str.replace('[^\w\s]','')
+    rts['token'].replace('', np.nan, inplace=True)
+    rts = rts.dropna()
+    return rts
+
+def combine_corpus_data(data: List[pd.DataFrame], tok_schemes: List[str], common_indices: pd.Series):
+    combined_data = []
+    for surprisal_rts, col_name in zip(data, tok_schemes):
+        surprisal_rts = surprisal_rts[surprisal_rts.index.isin(common_indices)]
+        surprisal_rts['tokenization'] = col_name
+        combined_data.append(surprisal_rts)
+    return pd.concat(combined_data)
+
+def extract_one_sentence(df, sentence_id, corpus_name, transcript_id):
+    return df[(df['sentence_id'] == sentence_id) &
+     (df['corpus'] == corpus_name) & (df['transcript_id'] == transcript_id)]

@@ -13,7 +13,7 @@ from transformers import AutoTokenizer
 
 from src.morph_segmenter import load_model_and_vocab, tokenize_sentence
 
-def compute_surprisals(rt_data:pd.DataFrame, model: Dict):
+def compute_surprisals(rt_data:pd.DataFrame, model: Dict, corpus_name: str):
     # rt_data has 4 columns, token_uid, token, rt, and transcript_id
     transcript_ids = rt_data['transcript_id'].unique()
     surprisals = []
@@ -44,8 +44,8 @@ def compute_surprisals(rt_data:pd.DataFrame, model: Dict):
             else:
                 print(sentences[i], tid)
         surprisals += transcript_surprisals
-    if len(lookup_tbl):
-        with open(model['lookup_path'], "w") as file:
+    if len(lookup_tbl): # If you're running the morphological transducer, change the path name in the config file so it doesn't overwrite a previous lookup table
+        with open(model['lookup_path'][corpus_name], "w") as file:
             file.writelines(line + "\n" for line in lookup_tbl)
     return pd.DataFrame(surprisals)
 
@@ -78,10 +78,11 @@ if __name__ == "__main__":
     parser.add_argument("--data", type = str, required = True, help = "path to CSV of RTs")
     parser.add_argument("--model", type = str, required = True, help = "path to .arpa file for 5gram LM")
     parser.add_argument("--output", type = str, required = True, help = "output filepath")
+    parser.add_argument("--corpus_name", type = str, required=True, help="this is needed for morphological surprisal when we write lookup tables")
     args = parser.parse_args()
     corpus_surprisals = pd.DataFrame()
     model_config = json.load(open("model_config.json"))
     model = load_model(args.model, model_config)
     rt_df = pd.read_csv(args.data)
-    corpus_surprisals = compute_surprisals(rt_df, model)
+    corpus_surprisals = compute_surprisals(rt_df, model, args.corpus_name)
     corpus_surprisals.to_csv(args.output)

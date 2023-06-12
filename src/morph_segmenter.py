@@ -43,7 +43,7 @@ def load_model_and_vocab(model_dir:str):
     for key, value in model_config.items():
         args_dict[key.replace("-", "_")] = value
     args_dict['device'] = 'cpu'
-    print("loading model")
+    #print("loading model")
     model = transducer.Transducer(vocab, expert, argparse.Namespace(**args_dict))
     model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
     model.eval()
@@ -73,8 +73,8 @@ def output_as_sentences(decoder_output: List[str], corpus_sentences: List[str], 
     token_sentences = []
     start_index = 0
     words_per_sentence = [len(s.split(" ")) for s in corpus_sentences]
-    print("combining word-level predictions into sentences")
-    for i in tqdm(range(len(words_per_sentence))):
+    #print("combining word-level predictions into sentences")
+    for i in range(len(words_per_sentence)):
         end_index = start_index + words_per_sentence[i]
         processed_decoder_output = [insert_wb_char(token.split("\t")[1], wb_char) for token in decoder_output[start_index:end_index]]
         token_sentences.append(" ".join(processed_decoder_output))
