@@ -1,11 +1,13 @@
 ## Code for EMNLP 2023 Submission on Tokenization Techniques and Psychometric Predictive Power
 
+Run `conda create -n token --file environment.yml` to create a Conda environment with Python dependencies.
+
 ### Data Sources
 The morphological transducer (renamed `neural_transducer` after cloning) was from https://github.com/slvnwhrl/il-reimplementation [TODO: add note on trained model??]
 In `data`, `human_rts` came from  https://drive.google.com/file/d/1e-anJ4laGlTY-E0LNook1EzKBU2S1jI8, provided in the Wilcox et al (2020)'s implementation: https://github.com/wilcoxeg/neural-networks-read-times/tree/master.
 The reaction times from the Dundee and Natural Stories corpora were processed by one-off scripts in the `scripts` directory, and stored in `data/processed_rts`.
 The version of COCA we used was from [Yang et al (2022)](https://www.frontiersin.org/articles/10.3389/frai.2022.731615/full), it was downloaded from https://osf.io/ydr7w/, and is in `corpora/public_coca_binary`.
-KenLM was downloaded from https://github.com/kpu/kenlm, and built using the instructions under the "Compiling" section. Models were queried using a Python module, included with the rest of the dependencies (is it???)
+KenLM was downloaded from https://github.com/kpu/kenlm, and built using the instructions under the "Compiling" section. Models were queried using a Python module, included with the rest of the dependencies.
 
 ### Running Experiments
 
