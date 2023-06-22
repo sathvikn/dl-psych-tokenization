@@ -3,8 +3,9 @@
 Run `conda create -n token --file environment.yml` to create a Conda environment with Python dependencies.
 
 ### Data Sources
-The morphological transducer (renamed `neural_transducer` after cloning) was from https://github.com/slvnwhrl/il-reimplementation [TODO: add note on trained model??]
-In `data`, `human_rts` came from  https://drive.google.com/file/d/1e-anJ4laGlTY-E0LNook1EzKBU2S1jI8, provided in the Wilcox et al (2020)'s implementation: https://github.com/wilcoxeg/neural-networks-read-times/tree/master.
+The morphological transducer (renamed `neural_transducer` after cloning) was from https://github.com/slvnwhrl/il-reimplementation. The trained model was provided to us by the authors, we do not include it in the submission. If the paper is accepted, we will consult with them if we can provide the model when we release our code.
+
+In `data`, `human_rts` came from  https://drive.google.com/file/d/1e-anJ4laGlTY-E0LNook1EzKBU2S1jI8, provided in [Wilcox et al (2020)'s implementation](https://github.com/wilcoxeg/neural-networks-read-times/tree/master).
 The reaction times from the Dundee and Natural Stories corpora were processed by one-off scripts in the `scripts` directory, and stored in `data/processed_rts`.
 The version of COCA we used was from [Yang et al (2022)](https://www.frontiersin.org/articles/10.3389/frai.2022.731615/full), it was downloaded from https://osf.io/ydr7w/, and is in `corpora/public_coca_binary`.
 KenLM was downloaded from https://github.com/kpu/kenlm, and built using the instructions under the "Compiling" section. Models were queried using a Python module, included with the rest of the dependencies.
@@ -23,5 +24,8 @@ Example:
 
 Finally, generate per-token surprisal estimates for a corpus of psycholinguistic results. These are stored in `data/surprisal_data`.
 
-They will be combined with reading time data in `cleaning_exploration.ipynb` and written to `data/surprisal_data/`. That notebook also generates the graphs in the appendix, used for qualitative, exploratory purposes.
+Example:
+`python generate_surprisal_estimates.py --data data/processed_rts/dundee.csv --model 5gram_coca_bpe.arpa --output data/surprisal_data/dundee/bpe_surprisal.csv`
+
+They will be combined with reading time data in `cleaning_exploration.ipynb` and written to `data/surprisal_data/`. That notebook also generates the bar graphs in the appendix, used for qualitative, exploratory purposes.
 The predictive power analyses and visualizations are in `regression_analysis.ipynb`.
