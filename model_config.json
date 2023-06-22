@@ -1,5 +1,7 @@
 {
 	"orth": {"word_boundary":""},
 	"bpe": {"word_boundary":"Ġ"},
-	"transducer": {"word_boundary":"↓", "path": "sigmorphon_model/model", "lookup_tbl": {"dundee": "dundee_morph_lookup.tsv", "natural_stories": "ns_morph_lookup.tsv"}}
+	"transducer": {"word_boundary":"↓", "path": "sigmorphon_model/model", "lookup_tbl": {
+		"dundee": "data/morpheme_lookup_tables/dundee_morph_lookup.tsv", 
+		"natural_stories": "data/morpheme_lookup_tables/ns_morph_lookup.tsv"}}
 }
