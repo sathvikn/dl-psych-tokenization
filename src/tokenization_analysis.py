@@ -104,3 +104,9 @@ def combine_corpus_data(data: List[pd.DataFrame], tok_schemes: List[str], common
 def extract_one_sentence(df, sentence_id, corpus_name, transcript_id):
     return df[(df['sentence_id'] == sentence_id) &
      (df['corpus'] == corpus_name) & (df['transcript_id'] == transcript_id)]
+
+def generate_token_counts(column: pd.Series, names: List[str]):
+    # for the num_tokens column - make a table of how many tokens each word got split into
+    token_counts = pd.DataFrame(column.value_counts()).reset_index()
+    token_counts.columns = names
+    return token_counts

@@ -1,9 +1,9 @@
-## Code for EMNLP 2023 Submission on Tokenization Techniques and Psychometric Predictive Power
+## Code for EMNLP 2023 Submission: Words, Subwords, and Morphemes: What Really Matters in the Surprisal-Reading Time Relationship?}
 
 Run `conda create -n token --file environment.yml` to create a Conda environment with Python dependencies.
 
 ### Data Sources
-The morphological transducer (renamed `neural_transducer` after cloning) was from https://github.com/slvnwhrl/il-reimplementation. The trained model was provided to us by the authors, we do not include it in the submission. If the paper is accepted, we will consult with them if we can provide the model when we release our code.
+The morphological transducer (renamed `neural_transducer` after cloning) was from https://github.com/slvnwhrl/il-reimplementation. Since the trained model was provided to us by the authors, we do not include it in the submission. If the paper is accepted, we will consult with them if we can provide the model when we release our code.
 
 In `data`, `human_rts` came from  https://drive.google.com/file/d/1e-anJ4laGlTY-E0LNook1EzKBU2S1jI8, provided in [Wilcox et al (2020)'s implementation](https://github.com/wilcoxeg/neural-networks-read-times/tree/master).
 The reaction times from the Dundee and Natural Stories corpora were processed by one-off scripts in the `scripts` directory, and stored in `data/processed_rts`.
@@ -28,4 +28,9 @@ Example:
 `python generate_surprisal_estimates.py --data data/processed_rts/dundee.csv --model 5gram_coca_bpe.arpa --output data/surprisal_data/dundee/bpe_surprisal.csv`
 
 They will be combined with reading time data in `cleaning_exploration.ipynb` and written to `data/surprisal_data/`. That notebook also generates the bar graphs in the appendix, used for qualitative, exploratory purposes.
-The predictive power analyses and visualizations are in `regression_analysis.ipynb`.
+The predictive power analyses and visualizations are in `regression_analysis.ipynb`. Word frequency is used as a predictor in the regression models. They are in `data/word_freqs.txt`, and we query the n-gram model with orthographic tokenization for unigram probabilities as follows:
+
+```
+sed -n "/\\\\1-grams:/,/\\\\2-grams/p" models/5gram_baseline.arpa > word_freqs.txt
+sed -i.backup '1d;$d' word_freqs.txt
+```
