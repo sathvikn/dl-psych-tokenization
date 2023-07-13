@@ -21,6 +21,7 @@ def align_surprisal(rt_data: pd.DataFrame, surprisals: pd.DataFrame, model_confi
         token_index += 1
         current_word, current_token = current_word[1:], current_token[1:] # getting rid of index column
         buffer = {column:value for value, column in zip(current_token[1:], surprisal_columns[1:])}
+        buffer['num_tokens'] = 1 # for later analysis
         if word_boundary and word_boundary in buffer['token']:
             buffer['token'] = buffer['token'][1:].lower() # remove the word boundary character
         ref = current_word[rt_columns.index('token')].lower()
@@ -30,6 +31,7 @@ def align_surprisal(rt_data: pd.DataFrame, surprisals: pd.DataFrame, model_confi
         while mismatch:
             current_token = next(surprisal_iterator)[1:]
             token_index += 1
+            buffer['num_tokens'] += 1
             if use_lookup:
                 buffer['token'] += " "
             buffer['token'] += current_token[surprisal_columns.index('token')]
@@ -67,7 +69,7 @@ def prev_token_predictors(rt_data: pd.DataFrame, num_tokens: int):
 
 def generate_predictors(rt_data: pd.DataFrame, prev_tokens: int):
     rt_data['word_length'] = word_length(rt_data, 'token')
-    rt_data = join_log_freq('word_freqs.txt', rt_data)
+    rt_data = join_log_freq('data/word_freqs.txt', rt_data)
     rt_data = prev_token_predictors(rt_data, prev_tokens)
     return rt_data.dropna()
 
@@ -102,3 +104,9 @@ def combine_corpus_data(data: List[pd.DataFrame], tok_schemes: List[str], common
 def extract_one_sentence(df, sentence_id, corpus_name, transcript_id):
     return df[(df['sentence_id'] == sentence_id) &
      (df['corpus'] == corpus_name) & (df['transcript_id'] == transcript_id)]
+
+def generate_token_counts(column: pd.Series, names: List[str]):
+    # for the num_tokens column - make a table of how many tokens each word got split into
+    token_counts = pd.DataFrame(column.value_counts()).reset_index()
+    token_counts.columns = names
+    return token_counts

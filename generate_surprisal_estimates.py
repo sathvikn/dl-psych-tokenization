@@ -78,7 +78,7 @@ if __name__ == "__main__":
     parser.add_argument("--data", type = str, required = True, help = "path to CSV of RTs")
     parser.add_argument("--model", type = str, required = True, help = "path to .arpa file for 5gram LM")
     parser.add_argument("--output", type = str, required = True, help = "output filepath")
-    parser.add_argument("--corpus_name", type = str, required=True, help="this is needed for morphological surprisal when we write lookup tables")
+    parser.add_argument("--corpus_name", type = str, required=False, help="this is needed for morphological surprisal when we write lookup tables")
     args = parser.parse_args()
     corpus_surprisals = pd.DataFrame()
     model_config = json.load(open("model_config.json"))

@@ -32,12 +32,9 @@ if __name__ == "__main__":
     parser.add_argument("--model", type = str, required = False)
     args = parser.parse_args()
 
-    if args.input.split(".")[1] == "pkl": # the pickle w/public COCA data
-        corpus = process_corpus(load_pickle(args.input))
-    else: # another COCA file w/one sentence per line
-        corpus = open(args.input).readlines()
+    corpus = process_corpus(load_pickle(args.input))
     config = json.load(open("model_config.json"))
-    if args.model == "BPE":
+    if args.model.upper() == "BPE":
         tokenizer = AutoTokenizer.from_pretrained("gpt2")
         bpe_corpus = [config['bpe']['word_boundary'] + " ".join(tokenizer.tokenize(sentence)) for sentence in corpus] # figure out how to get the word boundary token from the library
         write_outputs(bpe_corpus, args.output)

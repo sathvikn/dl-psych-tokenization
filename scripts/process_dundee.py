@@ -21,7 +21,8 @@ for filename in averaged_times:
 
 rt_df = pd.DataFrame(rt_data)
 rt_df.index.name = "token_uid"
-# TODO document the function
+# exclusion_index outputs the indices of df where bool_column is true and the item that's at index value
+# so if value was 1, the function would output the indices where bool_column is true and the next row for each index
 exclusion_index = lambda df, bool_column, value: df[df[bool_column]].index.union(df[df[bool_column]].index + value)
 exclude_token_preceding_punct = exclusion_index(rt_df, 'preceding_punct', 1) # if the token at the end is punctuation, exclude the next token
 exclude_token_following_punct = exclusion_index(rt_df, 'following_punct', -1) # if the token at the beginning is punctuation, exclude the previous token
@@ -35,4 +36,4 @@ for i in range(len(exclusion_column)):
         exclusion_column.at[i] = 1
 rt_df['exclude'] = exclusion_column
 rt_df = rt_df[rt_df['token'] != '']
-rt_df.to_csv("dundee_rts_v1.csv")
+rt_df.to_csv("data/processed_rts/dundee_rts.csv")
