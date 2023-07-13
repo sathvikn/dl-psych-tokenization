@@ -20,12 +20,12 @@ Example:
 To train a 5-gram model using KenLM, run `kenlm/bin/lmplz -o 5` and provide the input text and the path for the model file
 
 Example:
-`kenlm/bin/lmplz/ -o 5 <corpora/public_coca_bpe.txt >models/5gram_coca_bpe.arpa`
+`kenlm/build/bin/lmplz/ -o 5 <corpora/public_coca_bpe.txt >models/5gram_coca_bpe.arpa`
 
 Finally, generate per-token surprisal estimates for a corpus of psycholinguistic results. These are stored in `data/surprisal_data`.
 
 Example:
-`python generate_surprisal_estimates.py --data data/processed_rts/dundee.csv --model 5gram_coca_bpe.arpa --output data/surprisal_data/dundee/bpe_surprisal.csv`
+`python generate_surprisal_estimates.py --data data/processed_rts/dundee_rts.csv --model models/5gram_coca_bpe.arpa --output data/surprisal_data/dundee/bpe_surprisal.csv`
 
 They will be combined with reading time data in `cleaning_exploration.ipynb` and written to `data/surprisal_data/`. That notebook also generates the bar graphs in the appendix, used for qualitative, exploratory purposes.
 The predictive power analyses and visualizations are in `regression_analysis.ipynb`. Word frequency is used as a predictor in the regression models. They are in `data/word_freqs.txt`, and we query the n-gram model with orthographic tokenization for unigram probabilities as follows:
