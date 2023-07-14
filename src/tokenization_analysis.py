@@ -65,6 +65,7 @@ def prev_token_predictors(rt_data: pd.DataFrame, num_tokens: int):
         rt_data[f'prev_freq_{str(i)}'] = rt_data['log_freq'].shift(i)
         rt_data[f'prev_len_{str(i)}'] = rt_data['word_length'].shift(i)
         rt_data[f'prev_surprisal_{str(i)}'] = rt_data['surprisal'].shift(i)
+        rt_data[f'prev_num_tokens_{str(i)}'] = rt_data['surprisal'].shift(i)
     return rt_data
 
 def generate_predictors(rt_data: pd.DataFrame, prev_tokens: int):
