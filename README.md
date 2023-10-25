@@ -5,7 +5,7 @@ Run `conda create -n token --file environment.yml` to create a Conda environment
 ### Data Sources
 The morphological transducer (renamed `neural_transducer` after cloning) was from https://github.com/slvnwhrl/il-reimplementation. Since the trained model was provided to us by the authors, we do not include it in the submission. If the paper is accepted, we will consult with them if we can provide the model when we release our code.
 
-In `data`, `human_rts` came from  https://drive.google.com/file/d/1e-anJ4laGlTY-E0LNook1EzKBU2S1jI8, provided in [Wilcox et al (2020)'s implementation](https://github.com/wilcoxeg/neural-networks-read-times/tree/master).
+The following data were provided with the submission, our versions are available upon request. To replicate our implementation, make directories called `data` and `corpora`. In our directory `data`, `human_rts` came from  https://drive.google.com/file/d/1e-anJ4laGlTY-E0LNook1EzKBU2S1jI8, provided in [Wilcox et al (2020)'s implementation](https://github.com/wilcoxeg/neural-networks-read-times/tree/master).
 The reaction times from the Dundee and Natural Stories corpora were processed by one-off scripts in the `scripts` directory, and stored in `data/processed_rts`.
 The version of COCA we used was from [Yang et al (2022)](https://www.frontiersin.org/articles/10.3389/frai.2022.731615/full), it was downloaded from https://osf.io/ydr7w/, and is in `corpora/public_coca_binary`.
 KenLM was downloaded from https://github.com/kpu/kenlm, and built using the instructions under the "Compiling" section. Models were queried using a Python module, included with the rest of the dependencies.
