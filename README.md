@@ -20,7 +20,7 @@ Example:
 To train a 5-gram model using KenLM, run `kenlm/bin/lmplz -o 5` and provide the input text and the path for the model file
 
 Example:
-`kenlm/build/bin/lmplz/ -o 5 <corpora/public_coca_bpe.txt >models/5gram_coca_bpe.arpa`
+`kenlm/build/bin/lmplz -o 5 <corpora/public_coca_bpe.txt >models/5gram_coca_bpe.arpa`
 
 Finally, generate per-token surprisal estimates for a corpus of psycholinguistic results. These are stored in `data/surprisal_data`.
 
@@ -33,4 +33,27 @@ The predictive power analyses and visualizations are in `regression_analysis.ipy
 ```
 sed -n "/\\\\1-grams:/,/\\\\2-grams/p" models/5gram_baseline.arpa > word_freqs.txt
 sed -i.backup '1d;$d' word_freqs.txt
+```
+
+### Citation
+If you use any part of this implementation, please cite [our paper](https://aclanthology.org/2023.findings-emnlp.752/)
+
+```
+@inproceedings{nair-resnik-2023-words,
+    title = "Words, Subwords, and Morphemes: What Really Matters in the Surprisal-Reading Time Relationship?",
+    author = "Nair, Sathvik  and
+      Resnik, Philip",
+    editor = "Bouamor, Houda  and
+      Pino, Juan  and
+      Bali, Kalika",
+    booktitle = "Findings of the Association for Computational Linguistics: EMNLP 2023",
+    month = dec,
+    year = "2023",
+    address = "Singapore",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2023.findings-emnlp.752",
+    doi = "10.18653/v1/2023.findings-emnlp.752",
+    pages = "11251--11260",
+    abstract = "An important assumption that comes with using LLMs on psycholinguistic data has gone unverified. LLM-based predictions are based on subword tokenization, not decomposition of words into morphemes. Does that matter? We carefully test this by comparing surprisal estimates using orthographic, morphological, and BPE tokenization against reading time data. Our results replicate previous findings and provide evidence that *in the aggregate*, predictions using BPE tokenization do not suffer relative to morphological and orthographic segmentation. However, a finer-grained analysis points to potential issues with relying on BPE-based tokenization, as well as providing promising results involving morphologically-aware surprisal estimates and suggesting a new method for evaluating morphological prediction.",
+}
 ```
